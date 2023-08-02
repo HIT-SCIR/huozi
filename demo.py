@@ -99,7 +99,7 @@ def run_gradio(generate_kwargs, model):
 
 
 def main(
-        model_name_or_path: str = "/share/home/xuyang/jnguan/models/bloom-7b/GBS-1040_lr_5e-5~5e-6_date_23-05-16_time_01-18-48/hf_iter_0007042",
+        model_name_or_path: str = "HIT-SCIR/huozi-7b-sft",
         precision: str = "fp16",
         mode: str = "gradio",
 
