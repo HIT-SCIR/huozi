@@ -210,18 +210,6 @@ print(f"Bot: {response}")
 
 ## <img src="https://cdn.jsdelivr.net/gh/LightChen233/blog-img/notes.png" width="25" /> Citation
 
-### ChatGPT 调研报告
-```latex
-@misc{chatgpt-report,
-    author = {Huozi-Team}.
-    title = {ChatGPT research report}
-    year = {2023},
-    publisher = {GitHub},
-    journal = {GitHub repository}
-    howpublished = {\url{https://github.com/HIT-SCIR/huozi}}
-}
-```
-
 ### 活字大模型
 ```latex
 @misc{huozi,
