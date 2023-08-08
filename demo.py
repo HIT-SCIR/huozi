@@ -81,11 +81,12 @@ def run_gradio(generate_kwargs, model):
             fn=Config_Chat,
             title="您好，我是活字",
             description="作为一个通用的人工智能语言模型，我能回答您的问题，帮您高效完成工作",
+            # 每一个都需要放在一个list内
             examples=[
-                "去哈尔滨要准备什么东西？",
-                "帮我写一个计算n的阶乘的代码",
-                "我5月1号到5月7号要出国游玩，请帮我写一封五一的请假信",
-                "如果运行程序出现segmentation fault，可能的原因是什么？如何避免？",
+                ["去哈尔滨要准备什么东西？"],
+                ["帮我写一个计算n的阶乘的代码"],
+                ["我5月1号到5月7号要出国游玩，请帮我写一封五一的请假信"],
+                ["如果运行程序出现segmentation fault，可能的原因是什么？如何避免？"]
             ],
             submit_btn="提交",
             retry_btn="重新生成",
@@ -95,7 +96,11 @@ def run_gradio(generate_kwargs, model):
                                topp_slider, do_sample_checkbox],
             additional_inputs_accordion_name="Generation Config"
         )
-    demo.launch()
+
+    # 本地运行 (如果要使用gradio生成分享链接，share=True)
+    demo.launch(share=False)
+    # 如果在服务器运行，如下声明后即可通过服务器地址+端口号的方式在其他设备访问
+    demo.launch(server_name="0.0.0.0", server_port=7860， share=False)
 
 
 def main(
