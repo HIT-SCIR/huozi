@@ -31,7 +31,7 @@
     - 在Bloom模型的基础上，在大约 150 亿 tokens 上进行指令微调训练得到的模型，具有更强的指令遵循能力、更好的安全性。
 - **活字 2.0**: [[模型权重](https://huggingface.co/HIT-SCIR/huozi-7b-rlhf)] [[RLHF数据](data/huozi_rlhf_data.csv)]  
     - 在活字1.0基础上，通过人类反馈的强化学习（RLHF）进一步优化了模型回复质量，使其更加符合人类偏好。相较于上一个版本平均长度明显提高，遵从指令的能力更强，逻辑更加清晰。
-    - 17k 人工标注的偏好数据，回复来自活字模型，可以用于训练奖励模型。
+    - 16.9k 人工标注的偏好数据，回复来自活字模型，可以用于训练奖励模型。
 
 ## <img src="https://cdn.jsdelivr.net/gh/LightChen233/blog-img/motivation.png" width="25" /> 介绍
 
