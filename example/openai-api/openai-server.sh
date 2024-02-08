@@ -1,0 +1,1 @@
+python -m vllm.entrypoints.openai.api_server --model /path/to/huozi3/checkpoint --served-model-name huozi --chat-template template.jinja --tensor-parallel-size 8 --response-role 助手 --max-model-len 32768
