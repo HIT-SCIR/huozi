@@ -1,0 +1,419 @@
+diff --git a/configs/datasets/collections/leaderboard/chinese_mixtral_chat.py b/configs/datasets/collections/leaderboard/chinese_mixtral_chat.py
+new file mode 100644
+index 0000000..cd928e3
+--- /dev/null
++++ b/configs/datasets/collections/leaderboard/chinese_mixtral_chat.py
+@@ -0,0 +1,13 @@
++from mmengine.config import read_base
++
++with read_base():
++    from ...ceval.ceval_gen_5f30c7 import ceval_datasets
++    from ...mmlu.mmlu_gen_4d595a import mmlu_datasets
++    from ...cmmlu.cmmlu_gen_c13365 import cmmlu_datasets
++    from ...GaokaoBench.GaokaoBench_gen_5cfe9e import GaokaoBench_datasets
++    from ...hellaswag.hellaswag_gen_6faab5 import hellaswag_datasets
++    from ...gsm8k.gsm8k_gen_1d7fe4 import gsm8k_datasets
++    from ...humaneval.humaneval_gen_a82cae import humaneval_datasets
++
++
++datasets = sum((v for k, v in locals().items() if k.endswith('_datasets')), [])
+diff --git a/configs/eval_Aurora_Plus.py b/configs/eval_Aurora_Plus.py
+new file mode 100644
+index 0000000..5971528
+--- /dev/null
++++ b/configs/eval_Aurora_Plus.py
+@@ -0,0 +1,6 @@
++from mmengine.config import read_base
++
++with read_base():
++    from .models.mixtral.vllm_Aurora_Plus import models
++    from .datasets.collections.leaderboard.chinese_mixtral_chat import datasets
++    from .summarizers.leaderboard import summarizer
+diff --git a/configs/eval_baichuan2_chat.py b/configs/eval_baichuan2_chat.py
+new file mode 100644
+index 0000000..67dc440
+--- /dev/null
++++ b/configs/eval_baichuan2_chat.py
+@@ -0,0 +1,6 @@
++from mmengine.config import read_base
++
++with read_base():
++    from .models.baichuan.vllm_baichuan2_13b_chat import models
++    from .datasets.collections.leaderboard.chinese_mixtral_chat import datasets
++    from .summarizers.leaderboard import summarizer
+diff --git a/configs/eval_baichuan2_chat_v1.py b/configs/eval_baichuan2_chat_v1.py
+new file mode 100644
+index 0000000..fd20fd2
+--- /dev/null
++++ b/configs/eval_baichuan2_chat_v1.py
+@@ -0,0 +1,6 @@
++from mmengine.config import read_base
++
++with read_base():
++    from .models.baichuan.vllm_baichuan2_13b_chat_v1 import models
++    from .datasets.collections.leaderboard.chinese_mixtral_chat import datasets
++    from .summarizers.leaderboard import summarizer
+diff --git a/configs/eval_chinese-alpaca-2-13b.py b/configs/eval_chinese-alpaca-2-13b.py
+new file mode 100644
+index 0000000..afb380a
+--- /dev/null
++++ b/configs/eval_chinese-alpaca-2-13b.py
+@@ -0,0 +1,6 @@
++from mmengine.config import read_base
++
++with read_base():
++    from .models.mixtral.chinese_alpaca_2_13b import models
++    from .datasets.collections.leaderboard.chinese_mixtral_chat import datasets
++    from .summarizers.leaderboard import summarizer
+diff --git a/configs/eval_chinese_mixtral_chat.py b/configs/eval_chinese_mixtral_chat.py
+new file mode 100644
+index 0000000..aef31d7
+--- /dev/null
++++ b/configs/eval_chinese_mixtral_chat.py
+@@ -0,0 +1,6 @@
++from mmengine.config import read_base
++
++with read_base():
++    from .models.mixtral.vllm_chinese_mixtral_instruct import models
++    from .datasets.collections.leaderboard.chinese_mixtral_chat import datasets
++    from .summarizers.leaderboard import summarizer
+diff --git a/configs/eval_huozi_rlhf.py b/configs/eval_huozi_rlhf.py
+new file mode 100644
+index 0000000..b170ed6
+--- /dev/null
++++ b/configs/eval_huozi_rlhf.py
+@@ -0,0 +1,6 @@
++from mmengine.config import read_base
++
++with read_base():
++    from .models.huozi.vllm_huozi_rlhf import models
++    from .datasets.collections.leaderboard.chinese_mixtral_chat import datasets
++    from .summarizers.leaderboard import summarizer
+diff --git a/configs/eval_huozi_sft.py b/configs/eval_huozi_sft.py
+new file mode 100644
+index 0000000..0e61ee6
+--- /dev/null
++++ b/configs/eval_huozi_sft.py
+@@ -0,0 +1,6 @@
++from mmengine.config import read_base
++
++with read_base():
++    from .models.huozi.vllm_huozi_sft import models
++    from .datasets.collections.leaderboard.chinese_mixtral_chat import datasets
++    from .summarizers.leaderboard import summarizer
+diff --git a/configs/eval_tiger_13b_chat_v5.py b/configs/eval_tiger_13b_chat_v5.py
+new file mode 100644
+index 0000000..4413a5e
+--- /dev/null
++++ b/configs/eval_tiger_13b_chat_v5.py
+@@ -0,0 +1,6 @@
++from mmengine.config import read_base
++
++with read_base():
++    from .models.tigerbot.vllm_tigerbot_13b_chat_v5 import models
++    from .datasets.collections.leaderboard.chinese_mixtral_chat import datasets
++    from .summarizers.leaderboard import summarizer
+diff --git a/configs/models/baichuan/vllm_baichuan2_13b_chat.py b/configs/models/baichuan/vllm_baichuan2_13b_chat.py
+new file mode 100644
+index 0000000..bdbbf5e
+--- /dev/null
++++ b/configs/models/baichuan/vllm_baichuan2_13b_chat.py
+@@ -0,0 +1,24 @@
++from opencompass.models import VLLM
++
++_meta_template = dict(
++    round=[
++        dict(role='HUMAN', begin='<reserved_106>'),
++        dict(role='BOT', begin='<reserved_107>', generate=True),
++    ],
++)
++
++models = [
++    dict(
++        type=VLLM,
++        abbr='baichuan2-13b-chat-v2',  # 模型简称，用于结果展示
++        path='/path/to/baichuan-inc/Baichuan2-13B-Chat-v2',
++        model_kwargs=dict(tensor_parallel_size=4),
++        meta_template=_meta_template,
++        max_out_len=512,  # 最长生成 token 数
++        max_seq_len=2048,
++        batch_size=32,
++        generation_kwargs=dict(temperature=0),
++        end_str='</s>',
++        run_cfg=dict(num_gpus=4, num_procs=1),
++    )
++]
+diff --git a/configs/models/baichuan/vllm_baichuan2_13b_chat_v1.py b/configs/models/baichuan/vllm_baichuan2_13b_chat_v1.py
+new file mode 100644
+index 0000000..596b1f6
+--- /dev/null
++++ b/configs/models/baichuan/vllm_baichuan2_13b_chat_v1.py
+@@ -0,0 +1,24 @@
++from opencompass.models import VLLM
++
++_meta_template = dict(
++    round=[
++        dict(role='HUMAN', begin='<reserved_106>'),
++        dict(role='BOT', begin='<reserved_107>', generate=True),
++    ],
++)
++
++models = [
++    dict(
++        type=VLLM,
++        abbr='baichuan2-13b-chat-v1',  # 模型简称，用于结果展示
++        path='/path/to/baichuan-inc/Baichuan2-13B-Chat',
++        model_kwargs=dict(tensor_parallel_size=4),
++        meta_template=_meta_template,
++        max_out_len=512,  # 最长生成 token 数
++        max_seq_len=2048,
++        batch_size=32,
++        generation_kwargs=dict(temperature=0),
++        end_str='</s>',
++        run_cfg=dict(num_gpus=4, num_procs=1),
++    )
++]
+diff --git a/configs/models/huozi/vllm_huozi_rlhf.py b/configs/models/huozi/vllm_huozi_rlhf.py
+new file mode 100644
+index 0000000..ff07c36
+--- /dev/null
++++ b/configs/models/huozi/vllm_huozi_rlhf.py
+@@ -0,0 +1,26 @@
++from opencompass.models import VLLM
++
++
++_meta_template = dict(
++    round=[
++        dict(role="HUMAN", begin='<|beginofutterance|>用户\n', end='<|endofutterance|>\n'),
++        dict(role="BOT", begin='<|beginofutterance|>助手\n', end='<|endofutterance|>\n', generate=True),
++    ],
++    eos_token_id=[250682, 250681]
++)
++
++models = [
++    dict(
++        type=VLLM,
++        abbr='huozi-rlhf',  # 模型简称，用于结果展示
++        path='/path/to/huozi-7b-rlhf',
++        model_kwargs=dict(tensor_parallel_size=4),
++        meta_template=_meta_template,
++        max_out_len=512,  # 最长生成 token 数
++        max_seq_len=2048,
++        batch_size=32,
++        generation_kwargs=dict(temperature=0, stop_token_ids=[250682, 250681], stop=["<|endofutterance|>"]),
++        end_str='</s>',
++        run_cfg=dict(num_gpus=4, num_procs=1),
++    )
++]
+diff --git a/configs/models/huozi/vllm_huozi_sft.py b/configs/models/huozi/vllm_huozi_sft.py
+new file mode 100644
+index 0000000..2fbe25c
+--- /dev/null
++++ b/configs/models/huozi/vllm_huozi_sft.py
+@@ -0,0 +1,26 @@
++from opencompass.models import VLLM
++
++
++_meta_template = dict(
++    round=[
++        dict(role="HUMAN", begin='<|beginofutterance|>用户\n', end='<|endofutterance|>\n'),
++        dict(role="BOT", begin='<|beginofutterance|>助手\n', end='<|endofutterance|>\n', generate=True),
++    ],
++    eos_token_id=[250682, 250681]
++)
++
++models = [
++    dict(
++        type=VLLM,
++        abbr='huozi-sft',  # 模型简称，用于结果展示
++        path='/path/to/huozi-7b-sft',
++        model_kwargs=dict(tensor_parallel_size=4),
++        meta_template=_meta_template,
++        max_out_len=512,  # 最长生成 token 数
++        max_seq_len=2048,
++        batch_size=32,
++        generation_kwargs=dict(temperature=0, stop_token_ids=[250682, 250681]),
++        end_str='</s>',
++        run_cfg=dict(num_gpus=4, num_procs=1),
++    )
++]
+diff --git a/configs/models/mixtral/chinese_alpaca_2_13b.py b/configs/models/mixtral/chinese_alpaca_2_13b.py
+new file mode 100644
+index 0000000..a329170
+--- /dev/null
++++ b/configs/models/mixtral/chinese_alpaca_2_13b.py
+@@ -0,0 +1,25 @@
++from opencompass.models import VLLM
++
++_meta_template = dict(
++    round=[
++        dict(role="HUMAN", begin='[INST] ', end=' [/INST]'),
++        dict(role="BOT", begin='', end='', generate=True),
++    ],
++    eos_token_id=2
++)
++
++models = [
++    dict(
++        type=VLLM,
++        abbr='chinese-alpaca-2-13b',  # 模型简称，用于结果展示
++        path='/path/to/hfl/chinese-alpaca-2-13b',
++        model_kwargs=dict(tensor_parallel_size=8),
++        meta_template=_meta_template,
++        max_out_len=512,  # 最长生成 token 数
++        max_seq_len=2048,
++        batch_size=32,
++        generation_kwargs=dict(temperature=0, stop=['</s>','[INST]','[/INST]']),
++        end_str='[INST]',
++        run_cfg=dict(num_gpus=8, num_procs=1),
++    )
++]
+diff --git a/configs/models/mixtral/vllm_Aurora_Plus.py b/configs/models/mixtral/vllm_Aurora_Plus.py
+new file mode 100644
+index 0000000..c719b1f
+--- /dev/null
++++ b/configs/models/mixtral/vllm_Aurora_Plus.py
+@@ -0,0 +1,27 @@
++from opencompass.models import VLLM
++
++
++_meta_template = dict(
++    begin="<s>",
++    round=[
++        dict(role="HUMAN", begin='[INST]', end='[/INST]'),
++        dict(role="BOT", begin="", end='</s>', generate=True),
++    ],
++    eos_token_id=2
++)
++
++models = [
++    dict(
++        type=VLLM,
++        abbr='Aurora-Plus',
++        path='/path/to/wangrongsheng/Aurora-Plus/merge_final',
++        model_kwargs=dict(tensor_parallel_size=8),
++        meta_template=_meta_template,
++        max_out_len=512,  # 最长生成 token 数
++        max_seq_len=2048,
++        batch_size=32,
++        generation_kwargs=dict(temperature=0),
++        end_str='</s>',
++        run_cfg=dict(num_gpus=8, num_procs=1),
++    )
++]
+diff --git a/configs/models/mixtral/vllm_chinese_mixtral_instruct.py b/configs/models/mixtral/vllm_chinese_mixtral_instruct.py
+new file mode 100644
+index 0000000..694cd13
+--- /dev/null
++++ b/configs/models/mixtral/vllm_chinese_mixtral_instruct.py
+@@ -0,0 +1,26 @@
++from opencompass.models import VLLM
++
++
++_meta_template = dict(
++    round=[
++        dict(role="HUMAN", begin='<|beginofutterance|>用户\n', end='<|endofutterance|>\n'),
++        dict(role="BOT", begin='<|beginofutterance|>助手\n', end='<|endofutterance|>\n', generate=True),
++    ],
++    eos_token_id=57001
++)
++
++models = [
++    dict(
++        type=VLLM,
++        abbr='huozi3',
++        path='/path/to/huozi3',
++        model_kwargs=dict(tensor_parallel_size=8),
++        meta_template=_meta_template,
++        max_out_len=512,  # 最长生成 token 数
++        max_seq_len=2048,
++        batch_size=32,
++        generation_kwargs=dict(temperature=0,stop_token_ids=[57000,57001],stop=["<|beginofutterance|>","<|endofutterance|>"]),
++        end_str='</s>',
++        run_cfg=dict(num_gpus=8, num_procs=1),
++    )
++]
+diff --git a/configs/models/tigerbot/vllm_tigerbot_13b_chat_v5.py b/configs/models/tigerbot/vllm_tigerbot_13b_chat_v5.py
+new file mode 100644
+index 0000000..02b6b77
+--- /dev/null
++++ b/configs/models/tigerbot/vllm_tigerbot_13b_chat_v5.py
+@@ -0,0 +1,25 @@
++from opencompass.models import VLLM
++
++
++_meta_template = dict(
++    round=[
++        dict(role='HUMAN', begin='\n\n### Instruction:\n'),
++        dict(role='BOT', begin='\n\n### Response:\n', generate=True),
++    ],
++)
++
++models = [
++    dict(
++        type=VLLM,
++        abbr='tigerbot-13b-chat-v5',
++        path="/path/to/TigerResearch/tigerbot-13b-chat-v5",
++        model_kwargs=dict(tensor_parallel_size=8),
++        meta_template=_meta_template,
++        max_out_len=100,
++        max_seq_len=2048,
++        batch_size=32,
++        generation_kwargs=dict(temperature=0),
++        end_str='</s>',
++        run_cfg=dict(num_gpus=8, num_procs=1),
++    )
++]
+diff --git a/configs/summarizers/leaderboard_test.py b/configs/summarizers/leaderboard_test.py
+new file mode 100644
+index 0000000..12a4fa9
+--- /dev/null
++++ b/configs/summarizers/leaderboard_test.py
+@@ -0,0 +1,24 @@
++from mmengine.config import read_base
++
++with read_base():
++    from .groups.agieval import agieval_summary_groups
++    from .groups.mmlu import mmlu_summary_groups
++    from .groups.cmmlu import cmmlu_summary_groups
++    from .groups.ceval import ceval_summary_groups
++
++
++summarizer = dict(
++    dataset_abbrs=[
++        '--------- 考试 Exam ---------',  # category
++        "ceval",
++        'mmlu',
++        'cmmlu',
++        "GaokaoBench",
++        '--------- 推理 Reasoning ---------',  # category
++        'hellaswag_gen',
++        'gsm8k',
++        'humaneval',
++    ],
++    summary_groups=sum(
++        [v for k, v in locals().items() if k.endswith("_summary_groups")], []),
++)
+diff --git a/run.sh b/run.sh
+new file mode 100644
+index 0000000..060bac5
+--- /dev/null
++++ b/run.sh
+@@ -0,0 +1,17 @@
++#!/bin/bash
++
++#SBATCH -J opencompass
++#SBATCH -o logs/%j.log
++#SBATCH -e logs/%j.err
++#SBATCH -p gpu
++#SBATCH -N 1
++#SBATCH --ntasks-per-node=1
++#SBATCH -c 56
++#SBATCH --mem=800G
++#SBATCH --gres=gpu:8
++
++# conda
++. "$HOME"/miniconda3/etc/profile.d/conda.sh
++conda activate opencompass
++
++python run.py configs/eval_chinese_mixtral_chat.py

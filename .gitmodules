@@ -1,3 +1,6 @@
 [submodule "example/llama.cpp"]
 	path = example/llama.cpp
 	url = https://github.com/ggerganov/llama.cpp.git
+[submodule "evaluate/opencompass"]
+	path = evaluate/opencompass
+	url = https://github.com/open-compass/opencompass
