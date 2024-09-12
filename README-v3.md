@@ -25,8 +25,7 @@
 
 ## 🎉 更新
 
-- [2024-09-12] 发布活字3.5版本
-- [2024-02-09] 发布活字3.5版本和中文MT-Bench数据集
+- [2024-02-09] 发布活字3.0版本和中文MT-Bench数据集
 - [2023-08-06] 发布活字1.0和活字2.0版本
 - [2023-05-04] 发布《ChatGPT调研报告》；内测活字大模型
 
@@ -37,15 +36,12 @@
 |[💁🏻‍♂ 开源清单](#-开源清单)|本仓库开源项目清单|
 |[💡 模型介绍](#-模型介绍)|简要介绍活字模型结构和训练过程|
 |[📥 模型下载](#-模型下载)|活字模型下载链接|
-|[💻 模型推理](#-模型推理)|活字模型推理样例，包括vLLM、llama.cpp、Ollama等推理框架的使用流程|
+|[💻 模型推理](#-模型推理)|活字模型推理样例，包括vLLM推理加速、llama.cpp量化推理等框架的使用流程|
 |[📈 模型性能](#-模型性能)|活字模型在主流评测任务上的性能|
 |[🗂 生成样例](#-生成样例)|活字模型实际生成效果样例|
 
 ## 💁🏻‍♂ 开源清单
-![](image/models-v3.5.png)
-<!-- - **活字 3.5**: [[模型权重](#-模型下载)] [[在线Demo](https://huozi.8wss.com)] -->
-- **活字 3.5**: [[模型权重](#-模型下载)]
-    - 活字3.5为基于活字3.0和Chinese-Mixtral-8x7B进行进一步性能优化的新模型。
+![](image/models-v3.png)
 - **活字 3.0**: [[模型权重](#-模型下载)] [[在线Demo](https://huozi.8wss.com)]
     - 活字3.0为一个稀疏混合专家模型，支持32K上下文，具有丰富的中、英文知识和强大的数学推理、代码生成能力。活字3.0较旧版活字具有更强的指令遵循能力和安全性。
 - **中文MT-Bench**: [[数据集](data/mt-bench-zh/)]
@@ -60,55 +56,42 @@
 
 ## 💡 模型介绍
 
-大规模语言模型（LLM）在自然语言处理领域取得了显著的进展，并在广泛的应用场景中展现了其强大的潜力。这一技术不仅吸引了学术界的广泛关注，也成为了工业界的热点。在此背景下，哈尔滨工业大学社会计算与信息检索研究中心（HIT-SCIR）近期推出了最新成果——**活字3.5**，致力于为自然语言处理的研究和实际应用提供更多可能性和选择。
+大规模语言模型（LLM）在自然语言处理领域取得了显著的进展，并在广泛的应用场景中展现了其强大的潜力。这一技术不仅吸引了学术界的广泛关注，也成为了工业界的热点。在此背景下，哈尔滨工业大学社会计算与信息检索研究中心（HIT-SCIR）近期推出了最新成果——**活字3.0**，致力于为自然语言处理的研究和实际应用提供更多可能性和选择。
 
-活字3.5是在[活字3.0](https://github.com/HIT-SCIR/huozi/README-v3.md)和[Chinese-Mixtral-8x7B](https://github.com/HIT-SCIR/Chinese-Mixtral-8x7B)基础上，进行进一步性能增强得到的模型。活字3.5支持**32K长上下文**，继承了活字3.0强大的综合能力，并在**中英文知识**、**数学推理**、**代码生成**、**指令遵循能力**、**内容安全性**等诸多方面实现了性能提升。
+活字3.0是基于[Chinese-Mixtral-8x7B](https://github.com/HIT-SCIR/Chinese-Mixtral-8x7B)，在大约30万行指令数据上微调得到的模型。该模型支持**32K上下文**，能够有效处理长文本。活字3.0继承了基座模型丰富的**中英文知识**，并在**数学推理**、**代码生成**等任务上具有强大性能。经过指令微调，活字3.0还在**指令遵循能力**和**安全性**方面实现了显著提升。
+
+此外，我们开源了**中文MT-Bench数据集**。这是一个中文开放问题集，包括80组对话任务，用于评估模型的多轮对话和指令遵循能力。该数据集是根据原始MT-Bench翻译得来的，每组问题均经过人工校对和中文语境下的适当调整。我们还对原始MT-Bench中的部分错误答案进行了修正。
 
 > [!IMPORTANT]
 > 活字系列模型仍然可能生成包含事实性错误的误导性回复或包含偏见/歧视的有害内容，请谨慎鉴别和使用生成的内容，请勿将生成的有害内容传播至互联网。
 
 > 活字1.0和活字2.0的文档请见[此处](README-v1v2.md)。
-> 活字3.0和中文MT-Bench的文档请见[此处](README-v3.md)。
 
 ### 模型结构
 
-活字3.5是一个稀疏混合专家模型（SMoE），每个专家层包含8个FFN，每次前向计算采用top-2稀疏激活。活字3.5共拥有46.7B参数，得益于其稀疏激活的特性，实际推理时仅需激活13B参数，有效提升了计算效率和处理速度。
+活字3.0是一个稀疏混合专家模型（SMoE），使用了Mixtral-8x7B的模型结构。它区别于LLaMA、BLOOM等常见模型，该模型的每个前馈神经网络（FFN）层被替换为了“专家层”，该层包含8个FFN和一个“路由器”。这种设计使得模型在推理过程中，可以独立地将每个Token路由到最适合处理它的两个专家中。该模型共拥有46.7B个参数，但得益于其稀疏激活的特性，实际推理时仅需激活13B参数，有效提升了计算效率和处理速度。
 
-<!-- ![](image/smoe-v3.5.png) -->
-<p align = "center">
-    <img src="image/smoe-v3.5.png" width="300" />
-</p>
+![](image/smoe.png)
 
 ### 训练过程
 
-活字3.5经过了多步训练，如下图所示：
-
-![](image/train-process-v3.5.png)
-
-其训练过程为：
-1. 【中文扩词表增量预训练】： 由于Mixtral-8x7B词表不支持中文，因此对中文的编解码效率较低，限制了中文场景下的实用性。我们首先基于Mixtral-8x7B进行了中文扩词表增量预训练，显著提高了模型对中文的编解码效率，并使模型具备了强大的中文生成和理解能力。我们已于[Chinese-Mixtral-8x7B代码仓库](https://github.com/HIT-SCIR/Chinese-Mixtral-8x7B)开源了模型权重和训练代码。
-2. 【活字3.0训练】：我们基于Chinese-Mixtral-8x7B在大约30万行指令数据上进行微调，得到了活字3.0模型，使用的数据集见[此处说明](https://github.com/HIT-SCIR/huozi/issues/11#issuecomment-1973113428)。活字3.0继承了基座模型丰富的中英文知识，并在数学推理、代码生成等任务上具有强大性能。经过指令微调，活字3.0还在指令遵循能力和安全性方面实现了显著提升。
-3. 【活字1.0数据集微调】：我们尝试使用活字1.0数据集对Chinese-Mixtral-8x7B进行指令微调，得到的*中间检查点 1*在中英文知识（如 C-Eval、CMMLU、MMLU 等任务）方面表现优异，甚至超过了活字3.0。然而，该模型在指令遵循能力和安全性上落后活字3.0较多。
-4. 【指令遵循能力强化】：针对*中间检查点 1*在指令遵循能力上的不足，我们引入了额外的数据集进行强化。此外，根据[Longxu Dou等人的经验](https://arxiv.org/pdf/2404.03608)，我们在训练过程中使用了[BPE Dropout](https://aclanthology.org/2020.acl-main.170/)技术，以进一步增加模型对指令的鲁棒性。该过程训练得到了*中间检查点 2*。
-5. 【模型融合】：我们参考[Yiming Cui等人的方法](https://github.com/ymcui/Chinese-LLaMA-Alpaca-3)，对*中间检查点 1*、*中间检查点 2*以及活字3.0模型进行融合，生成了*中间检查点 3*。
-6. 【模型融合后训练】：在融合后的模型基础上，我们进一步进行了指令微调，最终推出了活字3.5。该版本在中英文知识、指令遵循能力和安全性回复等方面均有提升。
+由于Mixtral-8x7B词表不支持中文，因此对中文的编解码效率较低，限制了中文场景下的实用性。我们首先基于Mixtral-8x7B进行了中文扩词表增量预训练，显著提高了模型对中文的编解码效率，并使模型具备了强大的中文生成和理解能力。这项成果名为[Chinese-Mixtral-8x7B](https://github.com/HIT-SCIR/Chinese-Mixtral-8x7B)，我们已于2024年1月18日开源了其模型权重和训练代码。基于此，我们进一步对模型进行指令微调，最终推出了活字3.0。这一版本的中文编码、指令遵循、安全回复等能力都有显著提升。
 
 ## 📥 模型下载
 
 |模型名称|文件大小|下载地址|备注|
 |:---:|:---:|:---:|:---:|
-|huozi3.5|88GB|[🤗HuggingFace](https://huggingface.co/HIT-SCIR/huozi3.5)<br>[ModelScope](https://modelscope.cn/models/HIT-SCIR/huozi3.5/summary)|活字3.5 完整模型|
-|huozi3.5-ckpt-1|88GB|[🤗HuggingFace](https://huggingface.co/HIT-SCIR/huozi3.5-ckpt-1)<br>[ModelScope](https://modelscope.cn/models/HIT-SCIR/huozi3.5-ckpt-1/summary)|活字3.5 中间检查点 1|
-|huozi3.5-ckpt-2|88GB|[🤗HuggingFace](https://huggingface.co/HIT-SCIR/huozi3.5-ckpt-2)<br>[ModelScope](https://modelscope.cn/models/HIT-SCIR/huozi3.5-ckpt-2/summary)|活字3.5 中间检查点 2|
-|huozi3.5-ckpt-3|88GB|[🤗HuggingFace](https://huggingface.co/HIT-SCIR/huozi3.5-ckpt-3)<br>[ModelScope](https://modelscope.cn/models/HIT-SCIR/huozi3.5-ckpt-3/summary)|活字3.5 中间检查点 3|
+|huozi3|88GB|[🤗HuggingFace](https://huggingface.co/HIT-SCIR/huozi3)<br>[ModelScope](https://modelscope.cn/models/HIT-SCIR/huozi3/summary)|活字3.0 完整模型|
+|huozi3-gguf|25GB|[🤗HuggingFace](https://huggingface.co/HIT-SCIR/huozi3-gguf)<br>[ModelScope](https://modelscope.cn/models/HIT-SCIR/huozi3-gguf/summary)|活字3.0 GGUF版本，适用于llama.cpp等推理框架|
+|huozi3-awq|24GB|[🤗HuggingFace](https://huggingface.co/HIT-SCIR/huozi3-awq)<br>[ModelScope](https://modelscope.cn/models/HIT-SCIR/huozi3-awq/summary)|活字3.0 AWQ版本，适用于AutoAWQ等推理框架|
 
-如果您希望微调活字3.5或Chinese-Mixtral-8x7B，请参考[此处训练代码](https://github.com/HIT-SCIR/Chinese-Mixtral-8x7B?tab=readme-ov-file#%E5%BE%AE%E8%B0%83)。
+如果您希望微调活字3.0或Chinese-Mixtral-8x7B，请参考[此处训练代码](https://github.com/HIT-SCIR/Chinese-Mixtral-8x7B?tab=readme-ov-file#%E5%BE%AE%E8%B0%83)。
 
 ## 💻 模型推理
 
 ### Quick Start
 
-活字3.5采用ChatML格式的prompt模板，格式为：
+活字3.0采用ChatML格式的prompt模板，格式为：
 ```
 <|beginofutterance|>系统
 {system prompt}<|endofutterance|>
@@ -118,14 +101,14 @@
 {output}<|endofutterance|>
 ```
 
-使用活字3.5进行推理的示例代码如下：
+使用活字3.0进行推理的示例代码如下：
 ```python
 # quickstart.py
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-model_id = "HIT-SCIR/huozi3.5"
+model_id = "HIT-SCIR/huozi3"
 
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(
@@ -154,7 +137,7 @@ outputs = model.generate(
 print(tokenizer.decode(outputs[0], skip_special_tokens=False))
 ```
 
-活字3.5支持全部Mixtral模型生态，包括Transformers、vLLM、llama.cpp、Ollama、Text generation web UI等框架。
+活字3.0支持全部Mixtral模型生态，包括Transformers、vLLM、llama.cpp、AutoAWQ、Text generation web UI等框架。
 
 如果您在下载模型时遇到网络问题，可以使用我们在[ModelScope](#modelscope-模型推理)上提供的检查点。
 
@@ -172,7 +155,7 @@ transformers支持为tokenizer添加聊天模板，并支持流式生成。示�
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
 
-model_id = "HIT-SCIR/huozi3.5"
+model_id = "HIT-SCIR/huozi3"
 
 model = AutoModelForCausalLM.from_pretrained(
     model_id,
@@ -224,7 +207,7 @@ import torch
 - from transformers import AutoModelForCausalLM, AutoTokenizer
 + from modelscope import AutoTokenizer, AutoModelForCausalLM
 
-model_id = "HIT-SCIR/huozi3.5"
+model_id = "HIT-SCIR/huozi3"
 
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModelForCausalLM.from_pretrained(
@@ -262,7 +245,7 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=False))
 
 </summary>
 
-活字3.5支持通过vLLM实现推理加速，示例代码如下：
+活字3.0支持通过vLLM实现推理加速，示例代码如下：
 ```python
 # example/vllm-generate/generate.py
 
@@ -281,7 +264,7 @@ sampling_params = SamplingParams(
     temperature=0.8, top_p=0.95, stop_token_ids=[57001], max_tokens=2048
 )
 llm = LLM(
-    model="HIT-SCIR/huozi3.5",
+    model="HIT-SCIR/huozi3",
     tensor_parallel_size=4,
 )
 outputs = llm.generate(prompts, sampling_params)
@@ -301,7 +284,7 @@ for output in outputs:
 
 </summary>
 
-活字3.5可以部署为支持OpenAI API协议的服务，这使得活字3.5可以直接通过OpenAI API进行调用。
+活字3.0可以部署为支持OpenAI API协议的服务，这使得活字3.0可以直接通过OpenAI API进行调用。
 
 环境准备：
 ```shell
@@ -310,7 +293,7 @@ $ pip install vllm openai
 
 启动服务：
 ```shell
-$ python -m vllm.entrypoints.openai.api_server --model /path/to/huozi3.5/checkpoint --served-model-name huozi --chat-template template.jinja --tensor-parallel-size 8 --response-role 助手 --max-model-len 2048
+$ python -m vllm.entrypoints.openai.api_server --model /path/to/huozi3/checkpoint --served-model-name huozi --chat-template template.jinja --tensor-parallel-size 8 --response-role 助手 --max-model-len 2048
 ```
 
 使用OpenAI API发送请求：
@@ -385,6 +368,16 @@ gr.ChatInterface(predict).queue().launch()
 
 ### 量化推理
 
+活字3.0支持量化推理，下表为活字3.0在各个量化框架下显存占用量：
+
+|量化方法|显存占用|
+|:---:|:---:|
+|无|95GB|
+|AWQ|32GB|
+|GGUF(q4_0)|28GB|
+|GGUF(q2_k)|18GB|
+|GGUF(q2_k, offload 16层)|9.6GB|
+
 <details>
 <summary>
 
@@ -392,7 +385,9 @@ gr.ChatInterface(predict).queue().launch()
 
 </summary>
 
-GGUF格式旨在快速加载和保存模型，由llama.cpp团队推出，适用于llama.cpp、Ollama等框架。您可以手动将HuggingFace格式的活字3.5转换到GGUF格式。
+GGUF格式旨在快速加载和保存模型，由llama.cpp团队推出。我们已经提供了[GGUF格式的活字3.0](https://huggingface.co/HIT-SCIR/huozi3-gguf)。
+
+您也可以手动将HuggingFace格式的活字3.0转换到GGUF格式，以使用其他的量化方法。
 
 ##### Step 1 环境准备
 
@@ -420,34 +415,129 @@ $ LLAMA_METAL=1 make  # 用于Apple Silicon，暂未经过测试
 以下命令需要在`llama.cpp/`目录下：
 ```shell
 # 转换为GGUF格式
-$ python convert.py --outfile /path/to/huozi-gguf/huozi3.5.gguf /path/to/huozi3.5
+$ python convert.py --outfile /path/to/huozi-gguf/huozi3.gguf /path/to/huozi3
 # 进行GGUF格式的q4_0量化
-$ quantize /path/to/huozi-gguf/huozi3.5.gguf /path/to/huozi-gguf/huozi3.5-q4_0.gguf q4_0
+$ quantize /path/to/huozi-gguf/huozi3.gguf /path/to/huozi-gguf/huozi3-q4_0.gguf q4_0
 ```
 
 ##### Step 3 开始推理
 
 以下命令需要在`llama.cpp/`目录下：
 ```shell
-$ main -m /path/to/huozi-gguf/huozi3.5-q4_0.gguf --color --interactive-first -c 2048 -t 6 --temp 0.2 --repeat_penalty 1.1 -ngl 999 --in-prefix "<|beginofutterance|>用户\n" --in-suffix "<|endofutterance|>\n<|beginofutterance|>助手" -r "<|endofutterance|>"
+$ main -m /path/to/huozi-gguf/huozi3-q4_0.gguf --color --interactive-first -c 2048 -t 6 --temp 0.2 --repeat_penalty 1.1 -ngl 999 --in-prefix "<|beginofutterance|>用户\n" --in-suffix "<|endofutterance|>\n<|beginofutterance|>助手" -r "<|endofutterance|>"
 ```
 
 `-ngl`参数表示向GPU中offload的层数，降低这个值可以缓解GPU显存压力。经过我们的实际测试，q2_k量化的模型offload 16层，显存占用可降低至9.6GB，可在消费级GPU上运行模型：
 ```shell
-$ main -m /path/to/huozi-gguf/huozi3.5-q2_k.gguf --color --interactive-first -c 2048 -t 6 --temp 0.2 --repeat_penalty 1.1 -ngl 16 --in-prefix "<|beginofutterance|>用户\n" --in-suffix "<|endofutterance|>\n<|beginofutterance|>助手" -r "<|endofutterance|>"
+$ main -m /path/to/huozi-gguf/huozi3-q2_k.gguf --color --interactive-first -c 2048 -t 6 --temp 0.2 --repeat_penalty 1.1 -ngl 16 --in-prefix "<|beginofutterance|>用户\n" --in-suffix "<|endofutterance|>\n<|beginofutterance|>助手" -r "<|endofutterance|>"
 ```
 
 关于`main`的更多参数，可以参考llama.cpp的[官方文档](https://github.com/ggerganov/llama.cpp/tree/master/examples/main)。
 
-使用Ollama框架进行推理，可以参考Ollama的[README说明](https://github.com/ollama/ollama#import-from-gguf)。
+</details>
+
+<details>
+<summary>
+
+#### AWQ 格式
+
+</summary>
+
+AWQ是一种量化模型的存储格式。我们已经提供了[AWQ格式的活字3.0](https://huggingface.co/HIT-SCIR/huozi3-awq)，您也可以手动将HuggingFace格式的活字3.0转换到AWQ格式。
+
+##### Step 1 格式转换（可选）
+
+```python
+# example/autoawq-generate/quant.py
+
+from awq import AutoAWQForCausalLM
+from transformers import AutoTokenizer
+
+model_path = "/path/to/huozi3"
+quant_path = "/path/to/save/huozi3-awq"
+modules_to_not_convert = ["gate"]
+quant_config = {
+    "zero_point": True,
+    "q_group_size": 128,
+    "w_bit": 4,
+    "version": "GEMM",
+    "modules_to_not_convert": modules_to_not_convert,
+}
+
+model = AutoAWQForCausalLM.from_pretrained(
+    model_path,
+    safetensors=True,
+    **{"low_cpu_mem_usage": True},
+)
+tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+
+model.quantize(
+    tokenizer,
+    quant_config=quant_config,
+    modules_to_not_convert=modules_to_not_convert,
+)
+
+model.save_quantized(quant_path)
+tokenizer.save_pretrained(quant_path)
+
+print(f'Model is quantized and saved at "{quant_path}"')
+```
+
+##### Step 2 开始推理
+
+在获取到AWQ格式的模型权重后，可以使用AutoAWQForCausalLM代替AutoModelForCausalLM加载模型。示例代码如下：
+```diff
+# example/autoawq-generate/generate.py
+
+import torch
++ from awq import AutoAWQForCausalLM
+from transformers import AutoTokenizer, TextStreamer
+
+
+- model_id = "HIT-SCIR/huozi3"
++ model_id = "HIT-SCIR/huozi3-awq"  # or model_id = "/path/to/saved/huozi3-awq"
+
++ model = AutoAWQForCausalLM.from_quantized(model_id, fuse_layers=True)
+- model = AutoModelForCausalLM.from_pretrained(
+-     model_id,
+-     attn_implementation="flash_attention_2",
+-     torch_dtype=torch.bfloat16,
+-     device_map="auto",
+- )
+
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+tokenizer.chat_template = """{% for message in messages %}{{'<|beginofutterance|>' + message['role'] + '\n' + message['content']}}{% if (loop.last and add_generation_prompt) or not loop.last %}{{ '<|endofutterance|>' + '\n'}}{% endif %}{% endfor %}
+{% if add_generation_prompt and messages[-1]['role'] != '助手' %}{{ '<|beginofutterance|>助手\n' }}{% endif %}"""
+
+chat = [
+    {"role": "系统", "content": "你是一个智能助手"},
+    {"role": "用户", "content": "请你用python写一段快速排序的代码"},
+]
+
+inputs = tokenizer.apply_chat_template(
+    chat,
+    tokenize=True,
+    add_generation_prompt=True,
+    return_tensors="pt",
+).to(0)
+
+stream_output = model.generate(
+    inputs,
+    streamer=TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True),
+    eos_token_id=57001,
+    temperature=0.8,
+    top_p=0.9,
+    max_new_tokens=2048,
+)
+```
 
 </details>
 
 ## 📈 模型性能
 
-![](image/metric-v3.5-h.png)
+![](image/metric-v3-h.png)
 
-针对大模型综合能力评价，我们分别使用以下评测数据集对活字3.5进行评测：
+针对大模型综合能力评价，我们分别使用以下评测数据集对活字3.0进行评测：
 - C-Eval：一个全面的中文基础模型评估套件。它包含了13948个多项选择题，涵盖了52个不同的学科和四个难度级别。
 - CMMLU：一个综合性的中文评估基准，专门用于评估语言模型在中文语境下的知识和推理能力，涵盖了从基础学科到高级专业水平的67个主题。
 - GAOKAO：一个以中国高考题目为数据集，旨在提供和人类对齐的，直观，高效地测评大模型语言理解能力、逻辑推理能力的测评框架。
@@ -459,28 +549,34 @@ $ main -m /path/to/huozi-gguf/huozi3.5-q2_k.gguf --color --interactive-first -c 
 - MT-Bench-zh：我们根据MT-Bench翻译得来的中文问题集，每组问题均经过人工校对和中文语境下的适当调整。我们已在[此处](data/mt-bench-zh/)开源MT-Bench-zh数据集。
 - MT-Bench-safety：我们手工构造的安全数据集，包括暴力、色情、敏感等风险内容。该数据集为封闭数据集。
 
-活字3.5在推理时仅激活13B参数。下表为活字3.5与其他13B规模的中文模型以及旧版活字在各个评测数据集上的结果：
+活字3.0在推理时仅激活13B参数。下表为活字3.0与其他13B规模的中文模型以及旧版活字在各个评测数据集上的结果：
 
-![](image/evaluation-v3.5.png)
+<!-- | 模型名称                                      | 模型结构 | C-Eval<br>(中文) | CMMLU<br>(中文) | GAOKAO<br>(中文) | MT-Bench-zh<br>(中文对话) | MT-Bench-safety<br>(中文安全) | MMLU<br>(英文) | HellaSwag<br>(英文) | MT-Bench<br>(英文对话) | GSM8K<br>(数学) | HumanEval<br>(代码) |
+|---------------------------------------------|---------|--------------|-------------|---------------|--------------------------|-----------------------------|------------|------------------|-----------------------|-------------|-----------------|
+| baichuan-inc/Baichuan2-13B-Chat v2         | Baichuan| 56.13        | 58.50       | 48.99         | 6.74                     | 8.30                        | 54.50      | 51.19            | 6.59                  | 25.17       | 20.12           |
+| wangrongsheng/Aurora-Plus                   | Mixtral | 47.67        | 48.75       | 35.05         | 5.47                     | 6.70                        | 67.80      | 78.27            | 7.13                  | 66.26       | 27.44           |
+| TigerResearch/tigerbot-13b-chat-v5         | LLaMA   | 49.78        | 51.28       | 41.31         | 5.98                     | 7.63                        | 56.34      | 35.17            | 4.88                  | 66.19       | 14.63           |
+| hfl/chinese-alpaca-2-13b                   | LLaMA   | 43.47        | 44.53       | 25.94         | 5.77                     | 8.13                        | 53.05      | 56.85            | 6.24                  | 32.75       | 14.02           |
+| 活字1.0                                      | BLOOM   | 37.27        | 36.24       | 19.72         | 4.48                     | 7.18                        | 39.68      | 33.21            | 4.34                  | 21.99       | 13.41           |
+| 活字2.0                                      | BLOOM   | 32.05        | 34.68       | 22.97         | 5.08                     | 6.68                        | 38.04      | 33.34            | 4.79                  | 19.86       | 6.71            |
+| **活字3.0（最新版本）**                          | Mixtral | 51.82        | 51.06       | 41.21         | 6.29                     | 7.58                        | 69.48      | 65.18            | 7.62                  | 65.81       | 40.85           | -->
+![](image/evaluation-v3.png)
 
 > 我们在C-Eval、CMMLU、MMLU采用5-shot，GSM8K采用4-shot，HellaSwag、HumanEval采用0-shot，HumanEval采用pass@1指标。所有测试均采用greedy策略。
 >
 > 我们使用OpenCompass作为评测框架，commit hash为[4c87e77](https://github.com/open-compass/opencompass/tree/4c87e777d855636b9eda7ec87bcbbf12b62caed3)。评测代码位于[此处](./evaluate/)。
->
-> 在活字3.0的性能评测中，我们在HumanEval错误使用了base模型的评测方法，正确的评测结果已在上表内更新。
 
-根据上表中的测试结果，活字3.5较活字3.0取得了较稳定的性能提升，活字3.5的**中英文知识**、**数学推理**、**代码生成**、**中文指令遵循能力**、**中文内容安全性**等多方面能力均得到了加强。
+根据上表中的测试结果，活字3.0较旧版活字取得了巨大的性能提升。在中文知识方面，活字3.0达到了与Tigerbot-13B-chat-v5相当的性能，并是在中文对话和指令遵循方面表现得更加优秀。在英文知识方面，得益于原版Mixtral-8x7B的强大性能，活字3.0超过了Baichuan2-13B-Chat v2和LLaMA系列的扩词表模型，并在英文对话和指令遵循能力上达到了较高水平。在数学推理和代码生成任务上，活字3.0均展现出强大的性能，这说明活字3.0对复杂问题的深层次理解、多步推理、以及结构化信息处理等方面具有较强水平。由于我们采用了较高质量的代码数据集，活字3.0的代码生成能力也超越了同为Mixtral结构的Aurora-Plus模型。
 
 ## 🗂 生成样例
 
-下面是活字3.5在MT-Bench-zh评测集上的生成效果展示：
+下面是活字3.0在MT-Bench-zh评测集上的生成效果展示，并与活字2.0（RLHF版本）进行对比：
 
-![](image/examples/v3.5-case1.png)
-![](image/examples/v3.5-case2.png)
-![](image/examples/v3.5-case3.png)
-![](image/examples/v3.5-case4.png)
-![](image/examples/v3.5-case5.png)
-![](image/examples/v3.5-case6.png)
+![](image/examples/v3-case1.png)
+![](image/examples/v3-case2.png)
+![](image/examples/v3-case3.png)
+![](image/examples/v3-case4.png)
+![](image/examples/v3-case5.png)
 
 ## <img src="https://cdn.jsdelivr.net/gh/LightChen233/blog-img/folders.png" width="25" /> 开源协议
 对本仓库源码的使用遵循开源许可协议 [Apache 2.0](https://github.com/HIT-SCIR/huozi/blob/main/LICENSE)。
